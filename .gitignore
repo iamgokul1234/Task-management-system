@@ -1,0 +1,16 @@
+# Root-level gitignore
+
+# Environment variables — NEVER commit these
+.env
+.env.*
+!.env.example
+
+# Dependencies
+node_modules
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
