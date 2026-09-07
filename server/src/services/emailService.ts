@@ -5,8 +5,11 @@ export const sendEmail = async (options: { email: string; subject: string; messa
     let transporter;
     let isEthereal = false;
 
-    if (process.env.SMTP_HOST === 'smtp.ethereal.email' && process.env.SMTP_USER === 'ethereal_user@ethereal.email') {
-      // Automatically generate a test account if using the dummy placeholder credentials
+    const host = process.env.SMTP_HOST;
+    const user = process.env.SMTP_USER;
+
+    // Use Ethereal test account if SMTP is not configured or uses ethereal defaults
+    if (!host || host === 'smtp.ethereal.email' || user === 'ethereal_user@ethereal.email') {
       const testAccount = await nodemailer.createTestAccount();
       transporter = nodemailer.createTransport({
         host: 'smtp.ethereal.email',
@@ -21,7 +24,7 @@ export const sendEmail = async (options: { email: string; subject: string; messa
     } else {
       transporter = nodemailer.createTransport({
         host: process.env.SMTP_HOST,
-        port: Number(process.env.SMTP_PORT),
+        port: Number(process.env.SMTP_PORT) || 587,
         auth: {
           user: process.env.SMTP_USER,
           pass: process.env.SMTP_PASSWORD,
@@ -30,7 +33,7 @@ export const sendEmail = async (options: { email: string; subject: string; messa
     }
 
     const message = {
-      from: `${process.env.EMAIL_FROM}`,
+      from: process.env.EMAIL_FROM || '"Task Management System" <no-reply@taskmanagement.com>',
       to: options.email,
       subject: options.subject,
       text: options.message,
@@ -41,8 +44,10 @@ export const sendEmail = async (options: { email: string; subject: string; messa
     console.log(`Email sent: ${info.messageId}`);
 
     if (isEthereal) {
-      console.log(`\n================= EMAIL PREVIEW =================`);
-      console.log(`Preview URL: ${nodemailer.getTestMessageUrl(info)}`);
+      const previewUrl = nodemailer.getTestMessageUrl(info);
+      console.log(`\n=================================================`);
+      console.log(`✉️ EMAIL SENT TO: ${options.email}`);
+      console.log(`🔗 VIEW TEST EMAIL HERE: ${previewUrl}`);
       console.log(`=================================================\n`);
     }
 
