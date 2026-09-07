@@ -25,7 +25,7 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const token = generateToken(user._id as string, user.role);
+    const token = generateToken(user._id.toString(), user.role);
 
     res.status(200).json({
       success: true,
@@ -47,7 +47,7 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
 
 export const getMe = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const user = await User.findById(req.user?.id).select('-password');
+    const user = await User.findById(req.user?._id).select('-password');
     if (!user) {
       res.status(404).json({ success: false, message: 'User not found' });
       return;
