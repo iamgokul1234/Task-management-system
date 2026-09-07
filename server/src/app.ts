@@ -14,29 +14,26 @@ dotenv.config();
 const app = express();
 
 // Middleware
-app.use(helmet());
-
 const clientUrl = process.env.CLIENT_URL ? process.env.CLIENT_URL.replace(/\/$/, '') : '';
+
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (e.g. Postman, mobile apps, server-to-server)
       if (!origin) return callback(null, true);
-      
       const cleanOrigin = origin.replace(/\/$/, '');
-      
       if (
         !clientUrl ||
         cleanOrigin === clientUrl ||
         cleanOrigin.endsWith('.vercel.app') ||
         cleanOrigin.includes('localhost')
       ) {
-        return callback(null, true);
+        return callback(null, origin);
       }
-      
-      return callback(null, true);
+      return callback(null, origin);
     },
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   })
 );
 app.use(express.json());
