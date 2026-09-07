@@ -13,37 +13,41 @@ dotenv.config();
 
 const app = express();
 
-// Middleware
-app.use(helmet());
-
 const clientUrl = process.env.CLIENT_URL ? process.env.CLIENT_URL.trim().replace(/\/$/, '') : '';
 
-const corsOptions: cors.CorsOptions = {
-  origin: (origin, callback) => {
-    // Allow requests with no origin (mobile apps, curl, server-to-server)
-    if (!origin) return callback(null, true);
-    
+// CORS Middleware to guarantee Vercel origin matching & preflight approval
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  
+  if (origin) {
     const cleanOrigin = origin.trim().replace(/\/$/, '');
-    
     if (
       !clientUrl ||
       cleanOrigin === clientUrl ||
       cleanOrigin.endsWith('.vercel.app') ||
       cleanOrigin.includes('localhost')
     ) {
-      return callback(null, true);
+      res.setHeader('Access-Control-Allow-Origin', origin);
+    } else {
+      res.setHeader('Access-Control-Allow-Origin', origin);
     }
-    
-    return callback(null, true);
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-};
+  } else {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+  }
 
-app.use(cors(corsOptions));
-app.options('*', cors(corsOptions));
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
 
+  // Handle preflight OPTIONS requests immediately
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(204);
+  }
+
+  next();
+});
+
+app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
 app.use(express.json());
 
 // Database connection
